@@ -1,0 +1,220 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="container">
+  <h2>Create a New Question</h2>
+  
+  <% if (error) { %>
+    <div class="message error-message"><%= error %></div>
+  <% } %>
+  <% if (success) { %>
+    <div class="message success-message"><%= success %></div>
+  <% } %>
+
+  <div class="restricted-words-warning">
+    <h4>⚠️ Avoid These Unmeasurable Words</h4>
+    <p style="color: #92400e; margin-bottom: 0.8rem; font-weight: 600;">
+      These words are difficult to assess and should not be used in your questions:
+    </p>
+    <div class="restricted-words-list">
+      <span class="restricted-word-badge">believe</span>
+      <span class="restricted-word-badge">hear</span>
+      <span class="restricted-word-badge">realize</span>
+      <span class="restricted-word-badge">capacity</span>
+      <span class="restricted-word-badge">intelligence</span>
+      <span class="restricted-word-badge">recognize</span>
+      <span class="restricted-word-badge">comprehend</span>
+      <span class="restricted-word-badge">know</span>
+      <span class="restricted-word-badge">see</span>
+      <span class="restricted-word-badge">conceptualize</span>
+      <span class="restricted-word-badge">listen</span>
+      <span class="restricted-word-badge">memorize</span>
+      <span class="restricted-word-badge">think</span>
+      <span class="restricted-word-badge">experience</span>
+      <span class="restricted-word-badge">perceive</span>
+      <span class="restricted-word-badge">understand</span>
+      <span class="restricted-word-badge">feel</span>
+    </div>
+  </div>
+
+  <form action="/question/create" method="POST" class="question-form">
+    <div class="form-group">
+      <label for="blooms_level">1. Select Bloom's Taxonomy Level</label>
+      <select id="blooms_level" name="blooms_level" required>
+        <% Object.keys(bloomsData).forEach(level => { %>
+          <option value="<%= level %>" <%= (oldInput.blooms_level === level) ? 'selected' : '' %>>
+            <%= level %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="keyword-info">
+      <strong>📚 Suggested Keywords for Selected Level</strong>
+      <ul id="keywords-list">
+        <% Object.entries(bloomsData).forEach(([level, keywords]) => { %>
+          <li class="keyword-group <%= level === 'Remember' ? 'active' : '' %>" data-level="<%= level %>">
+            <strong><%= level %>:</strong> 
+            <span style="color: #6b7280; font-size: 0.9rem;"><%= keywords.join(', ') %></span>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <div class="drag-drop-container">
+      <div class="keywords-pool">
+        <div class="keywords-pool-title">💡 Click on keywords to add them to your question</div>
+        <div class="keyword-chips" id="keyword-chips">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="question_text">2. Write Your Question</label>
+      <div class="question-drop-zone" id="question-drop-zone">
+        <div class="dropped-keywords" id="dropped-keywords"></div>
+      </div>
+      <textarea id="question_text" name="question_text" rows="5" required placeholder="Type your question here or click keywords above to add them..."><%= oldInput.question_text || '' %></textarea>
+    </div>
+    
+    <button type="submit" class="btn">✨ Validate & Save Question</button>
+  </form>
+</main>
+
+<script>
+  const bloomsData = <%- JSON.stringify(bloomsData) %>;
+  const levelSelect = document.getElementById('blooms_level');
+  const keywordGroups = document.querySelectorAll('.keyword-group');
+  const keywordChipsContainer = document.getElementById('keyword-chips');
+  const questionTextarea = document.getElementById('question_text');
+  const dropZone = document.getElementById('question-drop-zone');
+  const droppedKeywordsContainer = document.getElementById('dropped-keywords');
+
+  function updateKeywords() {
+    const selectedLevel = levelSelect.value;
+
+    keywordGroups.forEach(group => {
+      if (group.dataset.level === selectedLevel) {
+        group.classList.add('active');
+      } else {
+        group.classList.remove('active');
+      }
+    });
+    const keywords = bloomsData[selectedLevel] || [];
+    keywordChipsContainer.innerHTML = '';
+    
+    keywords.forEach(keyword => {
+      const chip = document.createElement('div');
+      chip.className = 'keyword-chip';
+      chip.textContent = keyword;
+      chip.draggable = true;
+      chip.addEventListener('click', () => addKeywordToQuestion(keyword, chip));
+      chip.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', keyword);
+        chip.style.opacity = '0.5';
+      });
+      
+      chip.addEventListener('dragend', () => {
+        chip.style.opacity = '1';
+      });
+      
+      keywordChipsContainer.appendChild(chip);
+    });
+  }
+
+  function addKeywordToQuestion(keyword, chipElement) {
+    const currentText = questionTextarea.value;
+    const cursorPos = questionTextarea.selectionStart;
+    const textBefore = currentText.substring(0, cursorPos);
+    const textAfter = currentText.substring(cursorPos);
+    const newText = textBefore + keyword + ' ' + textAfter;
+    questionTextarea.value = newText;
+    const newCursorPos = cursorPos + keyword.length + 1;
+    questionTextarea.setSelectionRange(newCursorPos, newCursorPos);
+    questionTextarea.focus();
+    chipElement.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+      chipElement.style.transform = 'scale(1)';
+    }, 200);
+
+    addDroppedKeyword(keyword);
+  }
+
+  function addDroppedKeyword(keyword) {
+    const existingKeywords = Array.from(droppedKeywordsContainer.children)
+      .map(el => el.querySelector('span').textContent);
+    
+    if (existingKeywords.includes(keyword)) {
+      return;
+    }
+    
+    const droppedChip = document.createElement('div');
+    droppedChip.className = 'dropped-keyword';
+    droppedChip.innerHTML = `
+      <span>${keyword}</span>
+      <button type="button" class="remove-keyword" title="Remove keyword">×</button>
+    `;
+    droppedChip.querySelector('.remove-keyword').addEventListener('click', () => {
+      const text = questionTextarea.value;
+      const regex = new RegExp('\\b' + keyword + '\\b', 'gi');
+      questionTextarea.value = text.replace(regex, '').replace(/\s+/g, ' ').trim();
+      droppedChip.remove();
+    });
+    
+    droppedKeywordsContainer.appendChild(droppedChip);
+  }
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    
+    const keyword = e.dataTransfer.getData('text/plain');
+    if (keyword) {
+      const chips = Array.from(keywordChipsContainer.querySelectorAll('.keyword-chip'));
+      const chip = chips.find(c => c.textContent === keyword);
+      if (chip) {
+        addKeywordToQuestion(keyword, chip);
+      }
+    }
+  });
+
+  levelSelect.addEventListener('change', updateKeywords);
+  updateKeywords();
+
+  const restrictedWords = [
+    'believe', 'hear', 'realize', 'capacity', 'intelligence',
+    'recognize', 'comprehend', 'know', 'see', 'conceptualize',
+    'listen', 'memorize', 'think', 'experience', 'perceive',
+    'understand', 'feel'
+  ];
+
+  questionTextarea.addEventListener('input', () => {
+    const text = questionTextarea.value.toLowerCase();
+    let hasRestricted = false;
+    
+    restrictedWords.forEach(word => {
+      const regex = new RegExp('\\b' + word + '\\b', 'i');
+      if (regex.test(text)) {
+        hasRestricted = true;
+      }
+    });
+    if (hasRestricted) {
+      questionTextarea.style.borderColor = '#f59e0b';
+      questionTextarea.style.background = '#fffbeb';
+    } else {
+      questionTextarea.style.borderColor = '';
+      questionTextarea.style.background = '';
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,15 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="container">
+  <h2>Welcome, <%= teacher.name %>!</h2>
+  <div class="profile-card">
+    <h3>Your Profile Details</h3>
+    <p><strong>Name:</strong> <%= teacher.name %></p>
+    <p><strong>Email:</strong> <%= teacher.email %></p>
+    <p><strong>Education:</strong> <%= teacher.education || 'Not provided' %></p>
+    <p><strong>Schedule:</strong> <%= teacher.schedule || 'Not provided' %></p>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

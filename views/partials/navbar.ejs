@@ -1,0 +1,16 @@
+<nav class="navbar">
+  <div class="nav-brand">
+    <a href="/">Bloom's QMS</a>
+  </div>
+  <ul class="nav-links">
+    <% if (session.teacherId) { %>
+      <li><a href="/profile">Profile</a></li>
+      <li><a href="/question/create">Create Question</a></li>
+      <li><a href="/question/list">My Questions</a></li>
+      <li><a href="/logout" class="nav-logout">Logout</a></li>
+    <% } else { %>
+      <li><a href="/login">Login</a></li>
+      <li><a href="/register">Register</a></li>
+    <% } %>
+  </ul>
+</nav>

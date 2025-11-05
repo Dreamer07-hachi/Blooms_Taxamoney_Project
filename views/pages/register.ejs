@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="form-container">
+  <h2>Teacher Registration</h2>
+  <% if (error) { %>
+    <div class="message error-message"><%= error %></div>
+  <% } %>
+  <form action="/register" method="POST">
+    <div class="form-group">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" value="<%= oldInput.name || '' %>" required>
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="<%= oldInput.email || '' %>" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <div class="form-group">
+      <label for="education">Education (Optional)</label>
+      <textarea id="education" name="education"><%= oldInput.education || '' %></textarea>
+    </div>
+    <div class="form-group">
+      <label for="schedule">Teaching Schedule (Optional)</label>
+      <textarea id="schedule" name="schedule"><%= oldInput.schedule || '' %></textarea>
+    </div>
+    <button type="submit" class="btn">Register</button>
+  </form>
+  <p class="auth-link">Already have an account? <a href="/login">Login here</a></p>
+</main>
+
+<%- include('../partials/footer') %>    

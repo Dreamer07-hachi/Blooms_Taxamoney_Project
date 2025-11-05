@@ -1,0 +1,30 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="container">
+  <h2>My Saved Questions</h2>
+  <% if (questions.length === 0) { %>
+    <p>You have not created any questions yet. <a href="/question/create">Create one now!</a></p>
+  <% } else { %>
+    <table class="question-table">
+      <thead>
+        <tr>
+          <th>Question Text</th>
+          <th>Bloom's Level</th>
+          <th>Created On</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% questions.forEach(q => { %>
+          <tr>
+            <td><%= q.question_text %></td>
+            <td><%= q.blooms_level %></td>
+            <td><%= new Date(q.createdAt).toLocaleDateString() %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</main>
+
+<%- include('../partials/footer') %>

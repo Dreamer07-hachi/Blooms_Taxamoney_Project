@@ -4,6 +4,7 @@ import session from "express-session";
 import SequelizeStoreFactory from "connect-session-sequelize";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
+import serverless from "serverless-http";
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SequelizeStore = SequelizeStoreFactory(session.Store);
@@ -357,3 +358,6 @@ app.get("/question/list", isAuth, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+
+export const handler = serverless(app);
